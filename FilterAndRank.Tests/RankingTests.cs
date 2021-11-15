@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -28,6 +29,64 @@ namespace FilterAndRank.Tests
             );
 
             Assert.AreEqual(expected, actual);
+        }
+
+        [Test]
+        public void TestBasicQueryForMultipleCountries()
+        {
+            var expected = new List<RankedResult>
+            {
+                new RankedResult(32, 1),
+                new RankedResult(11, 1),
+                new RankedResult(62, 2),
+                new RankedResult(22, 2),
+                new RankedResult(766, 3)
+            };
+            var actual = Ranking.FilterByCountryWithRank(
+                testPeople,
+                testCountryRanks,
+                new List<string>() { "Canada", "USA" },
+                1, 10,
+                5
+            );
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test]
+        public void QueryShouldReturnMaxResult()
+        {
+            var maxResult = 3;
+
+            var actual = Ranking.FilterByCountryWithRank(
+                testPeople,
+                testCountryRanks,
+                new List<string>() { "Canada" },
+                1, 10,
+                3
+            );
+
+            Assert.AreEqual(actual.Count, maxResult);
+        }
+
+        [Test]
+        public void QueryShouldReturnOnlyRankingsBelongingToCountryFilter()
+        {
+            var country = "Canada";
+            var actual = Ranking.FilterByCountryWithRank(
+                testPeople,
+                testCountryRanks,
+                new List<string>() { country },
+                1, 10,
+                3
+            );
+
+            var Ids = actual.Select(a => a.PersonId);
+
+            var isEveryoneFromCanada = allTestPeople.Where(a => Ids.Contains(a.Id))
+                .All(a => a.Country.Equals(country, StringComparison.OrdinalIgnoreCase));
+
+            Assert.IsTrue(isEveryoneFromCanada);
         }
 
         internal struct TestPerson

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -14,8 +15,18 @@ namespace FilterAndRank
         {
             // TODO: write your solution here.  Do not change the method signature in any way, or validation of your solution will fail.
 
-            return people
-                .Select(p => new RankedResult(p.Id, rankingData.First(r => r.PersonId == p.Id).Rank))
+            return people.Join(rankingData, p => p.Id, r => r.PersonId, (person, ranking) => new PeopleAndRankingView 
+            { 
+                Id = person.Id,
+                Name = person.Name,
+                Country = ranking.Country,
+                Rank = ranking.Rank,
+            })
+                .Where(pr => countryFilter.Contains(pr.Country, StringComparer.OrdinalIgnoreCase))
+                .Where(r => r.Rank >= minRank && r.Rank <= maxRank)
+                .OrderBy(r => r, new RankingComparer(countryFilter)) 
+                .Select(r => new RankedResult(r.Id, r.Rank))
+                .Take(maxCount)
                 .ToList();
         }
     }
